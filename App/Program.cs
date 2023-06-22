@@ -1,93 +1,13 @@
-﻿using App;
-using App.DAL;
-using App.DAL.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
+﻿using App.DAL.Entities;
+using App.Utils;
 
 internal class Program
 {
-    public static void InitialMigrate()
-    {
-        using var dbContext = new MyDbContext();
-        try
-        {
-            dbContext.Database.OpenConnection(); // открываем соединение с базой данных
-
-            if (dbContext.Database.CanConnect()) // проверяем возможность подключения
-            {
-                //Console.WriteLine("Успешно подключились к БД!");
-                dbContext.Database.Migrate(); // Выполнение миграций при запуск
-            }
-            else
-            {
-                Console.WriteLine("Не удалось подключиться к БД!");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при подключении к БД: {ex.Message}");
-        }
-        finally
-        {
-            dbContext.Database.CloseConnection(); // закрываем соединение с базой данных
-        }
-    }
-
-    public static List<Pallet> loadingPalet()
-    {
-        try
-        {
-            using var dbContext = new MyDbContext();
-            return dbContext.Pallets.ToList();
-        }
-        catch (Exception ex)
-        {
-            return new List<Pallet>();
-        }
-    }
-
-    public static List<Box> loadingBoxes()
-    {
-        try
-        {
-            using var dbContext = new MyDbContext();
-            return dbContext.Boxes.ToList();
-        }
-        catch (Exception ex)
-        {
-            return new List<Box>();
-        }
-    }
-
-
     private static void Main(string[] args)
     {
-        InitialMigrate();
-
-        List<Box> boxes = loadingBoxes(); ;
-        List<Pallet> pallets = loadingPalet();
-
-
-        //foreach (Pallet pal in pallets)
-        //{
-        //    Console.WriteLine("____________________________");
-        //    Console.WriteLine($"{pal.ID} {pal.Height} {pal.Width} {pal.Depth} {pal.Weight} {pal.Volume}  {pal.Boxes} ");
-        //}
-
-
-        //// Пример добавления данных в базу данных
-        //dbContext.Users.Add(new User { Name = "Иван" });
-        //dbContext.SaveChanges();
-
-        //// Пример чтения данных из базы данных
-        //var users = dbContext.Users.ToList();
-        //foreach (var user in users)
-        //{
-        //    Console.WriteLine($"ID: {user.Id}, Имя: {user.Name}");
-        //}
-
-
+        DbHelper.InitialMigrate();
+        List<Box> boxes = DbHelper.loadingBoxes();
+        List<Pallet> pallets = DbHelper.loadingPalet();
 
         bool isRunning = true;
         while (isRunning)
@@ -101,21 +21,52 @@ internal class Program
             Console.WriteLine("6 - Вывод трех паллет, которые содержат коробки с наибольшим сроком годности");
             Console.WriteLine("7 - Сохранение данных");
             Console.WriteLine("* пункт 4 осуществляет группировку паллет по сроку годности и т.д.");
-            Console.WriteLine("q Выход");
+            Console.WriteLine("q - Выход");
 
-            Console.Write("Выберите пункт меню: ");
+            Console.Write("\nВыберите пункт меню: ");
             string input = Console.ReadLine();
 
             switch (input.ToLower())
             {
                 case "1":
-                    // Код для выполнения задачи 1
-                    Console.WriteLine("Задача 1");
+                    Box bx = DataService.CreateBox();
+                    boxes.Add(bx);
+                    Console.WriteLine($"Успешно! ID Коробки: {bx.ID}");
                     break;
 
                 case "2":
-                    // Код для выполнения задачи 2
-                    Console.WriteLine("Задача 2");
+                    Pallet pl = DataService.CreatePallet();
+                    pallets.Add(pl);
+                    Console.WriteLine($"Успешно! ID Паллеты: {pl.ID}");
+                    break;
+
+                case "3":
+                    foreach (Box pal in boxes)
+                    {
+                        Console.WriteLine("____________________________");
+                        Console.WriteLine($"{pal.ID} {pal.Height} {pal.Width} {pal.Depth} {pal.Weight} {pal.Volume}   ");
+                    }
+                    break;
+
+                case "4":
+                    foreach (Pallet pal in pallets)
+                    {
+                        Console.WriteLine("____________________________");
+                        Console.WriteLine($"{pal.ID} {pal.Height} {pal.Width} {pal.Depth} {pal.Weight} {pal.Volume}  {pal.Boxes} ");
+                    }
+                    break;
+
+                case "5":
+
+                    break;
+
+                case "6":
+                    break;
+
+                case "7":
+                    Task.Run(async () => await DbHelper.SaveDataToDatabase(pallets));
+                    Task.Run(async () => await DbHelper.SaveDataToDatabase(boxes));
+                    Console.WriteLine("Данные сохраненны!");
                     break;
 
                 case "q":

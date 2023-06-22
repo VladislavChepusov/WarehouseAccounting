@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace App.DAL.Entities
 {
-    public class StorageObject
+    public class StorageObject : IEntity
     {
         [Key]
         public Guid ID { get; set; }
@@ -19,8 +14,17 @@ namespace App.DAL.Entities
         public DateOnly ExpirationDate { get; set; }
 
 
-        public StorageObject() {
+        public StorageObject(double width, double height, double depth)
+        {
             ID = Guid.NewGuid();
+            Width = width;
+            Height = height;
+            Depth = depth;
         }
+    }
+
+    public interface IEntity
+    {
+        Guid ID { get; set; }
     }
 }
