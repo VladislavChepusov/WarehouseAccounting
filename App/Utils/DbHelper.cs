@@ -1,6 +1,7 @@
 ﻿using App.DAL.Entities;
 using App.DAL;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace App.Utils
 {
@@ -13,10 +14,8 @@ namespace App.Utils
             try
             {
                 dbContext.Database.OpenConnection(); // открываем соединение с базой данных
-
                 if (dbContext.Database.CanConnect()) // проверяем возможность подключения
                 {
-                    //Console.WriteLine("Успешно подключились к БД!");
                     dbContext.Database.Migrate(); // Выполнение миграций при запуск
                 }
                 else
@@ -26,7 +25,14 @@ namespace App.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при подключении к БД: {ex.Message}");
+                try
+                {
+                    dbContext.Database.Migrate(); // Выполнение миграций при запуск
+                }
+                catch
+                {
+                    Console.WriteLine($"Ошибка при подключении к БД: {ex.Message}");
+                }
             }
             finally
             {
@@ -39,7 +45,7 @@ namespace App.Utils
             try
             {
                 using var dbContext = new MyDbContext();
-                return dbContext.Pallets.ToList();
+                return dbContext.Pallets.Include(x => x.Boxes).ToList();
             }
             catch (Exception ex)
             {
@@ -60,36 +66,79 @@ namespace App.Utils
             }
         }
 
-
-        public static async Task  SaveDataToDatabase<T>(List<T> dataList) where T : class, IEntity
+        public static async Task SaveDataToDatabaseBox(List<Box> dataList) 
         {
-               
             using var dbContext = new MyDbContext();
-            var existingItems = await dbContext.Set<T>().Select(x => x.ID).ToListAsync();
-            var newItems = dataList.Where(x => !existingItems.Contains(x.ID));
-
-            await dbContext.Set<T>().AddRangeAsync(newItems);
+            var existingItems = await dbContext.Boxes.Select(x => x.BoxID).ToListAsync();
+            var newItems = dataList.Where(x => !existingItems.Contains(x.BoxID)).ToList();
+            var existingItemsToUpdate = dataList.Where(x => existingItems.Contains(x.BoxID)).ToList();
+            await dbContext.Boxes.AddRangeAsync(newItems);
+            dbContext.Boxes.UpdateRange(existingItemsToUpdate);
             await dbContext.SaveChangesAsync();
+        }
 
+        public static async Task SaveDataToDatabasePallet(List<Pallet> dataList)
+        {
+            using var dbContext = new MyDbContext();
+            var existingItems = await dbContext.Pallets.Select(x => x.PalletID).ToListAsync();
+            var newItems = dataList.Where(x => !existingItems.Contains(x.PalletID)).ToList();
+            var existingItemsToUpdate = dataList.Where(x => existingItems.Contains(x.PalletID)).ToList();
+            await dbContext.Pallets.AddRangeAsync(newItems);
+            dbContext.Pallets.UpdateRange(existingItemsToUpdate);
+            await dbContext.SaveChangesAsync();
         }
 
 
-        //public static void SaveDataToDatabase(List<Pallet> dataList, string tableName)
+
+
+        //public static async Task SaveDataToDatabase<T>(List<T> dataList) where T : class, IEntity
         //{
 
         //    using var dbContext = new MyDbContext();
 
-        //    var existingItems = dbContext.Pallets.Select(x => x.ID).ToList();
+        //    Console.WriteLine("_______________");
+        //    Console.WriteLine("Началось");
+        //    foreach (var obj in dataList)
+        //    {
+        //        Type type = obj.GetType();
+        //        PropertyInfo[] properties = type.GetProperties();
 
-        //    // Добавляем в таблицу только объекты, которых еще нет в базе данных
+        //        foreach (var prop in properties)
+        //        {
+        //            Console.WriteLine($"{prop.Name} = {prop.GetValue(obj)}");
+        //        }
+        //    }
+
+        //    Console.WriteLine("_______________");
+
+
+        //    var existingItems = await dbContext.Set<T>().Select(x => x.ID).ToListAsync();
+
         //    var newItems = dataList.Where(x => !existingItems.Contains(x.ID));
-        //    dbContext.Pallets.AddRange(newItems);
 
-        //    //  dbContext.Pallets.AddRange(dataList);
-        //    dbContext.SaveChanges();
+
+        //    await dbContext.Set<T>().AddRangeAsync(newItems);
+
+
+        //    await dbContext.SaveChangesAsync();
+
         //}
 
-       
+        //public static async Task SaveDataToDatabase<T>(List<T> dataList) where T : class, IEntity
+        //{
+        //    using var dbContext = new MyDbContext();
+        //    var existingItems = await dbContext.Set<T>().Select(x => x.).ToListAsync();
 
+        //    var newItems = dataList.Where(x => !existingItems.Contains(x.ID)).ToList();
+        //    var existingItemsToUpdate = dataList.Where(x => existingItems.Contains(x.ID)).ToList();
+
+        //    await dbContext.Set<T>().AddRangeAsync(newItems);
+
+        //    dbContext.Set<T>().UpdateRange(existingItemsToUpdate);
+
+        //    await dbContext.SaveChangesAsync();
+
+
+        //}
     }
 }

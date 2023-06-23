@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,8 +11,7 @@ namespace App.Utils
 {
     public class DataService
     {
-
-        public static DateOnly GetDateOnly()
+        private static DateOnly GetDateOnly()
         {
             DateOnly input;
             do
@@ -24,12 +24,12 @@ namespace App.Utils
                 }
                 else
                 {
-                    Console.Write("Некорректный ввод! Формат dd/mm/yyyy : ");
+                    Console.Write("\nНекорректный ввод! Формат dd/mm/yyyy : ");
                 }
             } while (true);
         }
 
-        public static double GetPositiveDouble()
+        private static double GetPositiveDouble()
         {
             double input;
             do
@@ -38,15 +38,44 @@ namespace App.Utils
 
                 if (double.TryParse(userInput, out input) && input > 0)
                 {
-                    // Если пользователь ввел корректный ввод, функция возвращает этот ввод
                     return input;
                 }
                 else
                 {
-                    Console.Write("Некорректный ввод! Введите положительное число: ");
+                    Console.Write("\nНекорректный ввод! Введите положительное число: ");
                 }
             } while (true);
         }
+
+        private static Guid GetGuid()
+        {
+            Guid input;
+            do
+            {
+                string userInput = Console.ReadLine();
+
+                if (Guid.TryParse(userInput, out input))
+                {
+                    return input;
+                }
+                else
+                {
+                    Console.Write("\nНекорректный ввод! Введите GUID в формате XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX: ");
+                }
+            } while (true);
+        }
+
+        private static bool BoxFitsOnPallet(double boxWidth, double boxDepth, double palletWidth, double palletDepth)
+        {
+            if (boxWidth <= palletWidth && boxDepth <= palletDepth)
+                return true;
+
+            if (boxDepth <= palletWidth && boxWidth <= palletDepth)
+                return true;
+
+            return false;
+        }
+
 
 
         public static Pallet CreatePallet()
@@ -63,15 +92,41 @@ namespace App.Utils
         }
 
 
-        public static Box CreateBox()
+        //public static Box? CreateBox(List<Pallet> pallets)
+        public static (Box?, List<Pallet>) CreateBox(List<Pallet> pallets)
         {
 
             Console.Write("Введите ширину коробки: ");
             double width = GetPositiveDouble();
             Console.Write("Введите высоту коробки: ");
             double height = GetPositiveDouble();
-            Console.Write("Введите глубины коробки: ");
+            Console.Write("Введите глубину коробки: ");
             double depth = GetPositiveDouble();
+
+            bool findPallet = true;
+            Guid IdPallet = new Guid();
+            Pallet pl = new Pallet();
+            while (findPallet)
+            {
+                Console.Write("Введите ID паллеты: ");
+                IdPallet = GetGuid();
+                pl = FindById(pallets, IdPallet, "PalletID");
+                if (pl != null)
+                {
+                    if (BoxFitsOnPallet(width, depth, pl.PalletWidth, pl.PalletDepth))
+                        findPallet = false;
+                    else
+                    {
+                        Console.Write("\nКоробка не помещается на паллете");
+                        return (null , pallets);
+                    }
+
+                }
+                else
+                    Console.Write("\nПаллета не найдена");
+
+            }
+
             Console.Write("Введите вес коробки: ");
             double weight = GetPositiveDouble();
             Console.Write("Для ввода срока годности - 1 для даты производства - 2 : ");
@@ -98,14 +153,116 @@ namespace App.Utils
                         break;
 
                     default:
-                        Console.Write("Некорректный ввод. Попробуйте снова : ");
+                        Console.Write("\nНекорректный ввод. Попробуйте снова : ");
                         break;
                 }
             }
 
-            Box box = new Box(width, height, depth, weight, productionDate, expirationDate);
-            return box;
+            Box box = new Box(IdPallet, width, height, depth, weight, productionDate, expirationDate);
+
+            pl.AddBox(box);
+
+            
+                
+
+            return (box ,pallets);
 
         }
+        private static T FindById<T>(List<T> list, Guid id, String property) where T : class
+        {
+            return list.FirstOrDefault(x => x.GetType().GetProperty(property).GetValue(x, null).Equals(id));
+        }
+
+
+        public static List<Pallet> RefreshPallet(List<Pallet> pallets, Guid PalletID)
+        {
+            var pl = FindById(pallets, PalletID, "PalletID");
+
+
+           
+
+
+            pl.PalletWeight = 30 + pl.Boxes.Sum(box => box.BoxWeight);
+
+            pl.PalletExpirationDate = pl.Boxes.Min(box => box.BoxExpirationDate);
+
+            pl.PalletVolume = (pl.PalletDepth * pl.PalletWidth * pl.PalletHeight ) 
+                + pl.Boxes.Sum(box => box.BoxVolume);
+
+
+
+            Console.WriteLine("ТУУУУУТ");
+            Console.WriteLine($"pl.PalletWeight 30 + {pl.Boxes.Sum(box => box.BoxWeight)} = {30 + pl.Boxes.Sum(box => box.BoxWeight)}");
+            Console.WriteLine($"pl.PalletWeight {pl.PalletWeight}");
+
+
+
+            Console.WriteLine($"pl.PalletVolume {pl.PalletDepth} * {pl.PalletWidth} * {pl.PalletHeight}" +
+                $"+{pl.Boxes.Sum(box => box.BoxVolume)} = {(pl.PalletDepth * pl.PalletWidth * pl.PalletHeight)
+                + pl.Boxes.Sum(box => box.BoxVolume)}");
+
+            Console.WriteLine($"pl.PalletVolume {pl.PalletVolume}");
+
+            return pallets;
+        }
+
+
+
+        public static (List<Pallet>, List<Box>) FillPallet(List<Pallet> pallets, List<Box> boxes)
+        //public static void FillPallet(List<Pallet> pallets, List<Box> boxes)
+        {
+            bool findBox = true;
+            Guid IdBox = new Guid();
+            Box bx = new Box();
+            while (findBox)
+            {
+                Console.Write("\nВведите ID коробки: ");
+                IdBox = GetGuid();
+                bx = FindById(boxes, IdBox, "BoxID");
+                if (bx != null)
+                    findBox = false;
+                else
+                    Console.Write("\nКоробка не найдена");
+            }
+
+            Guid OldIDPallet = bx.PalletID;
+            Pallet OldPallet = FindById(pallets, OldIDPallet, "PalletID");
+
+            bool findPallet = true;
+            Guid NewIdPallet = new Guid();
+            Pallet pl = new Pallet();
+            while (findPallet)
+            {
+                Console.Write("\nВведите ID паллеты: ");
+                NewIdPallet = GetGuid();
+
+                if (NewIdPallet == OldIDPallet)
+                {
+                    Console.Write("\nКоробка уже на этой паллете");
+                    return (pallets, boxes);
+                }
+
+                pl = FindById(pallets, NewIdPallet, "PalletID");
+                if (pl != null)
+                {
+                    if (BoxFitsOnPallet(bx.BoxWidth, bx.BoxDepth, pl.PalletWidth, pl.PalletDepth))
+                        findPallet = false;
+                    else
+                    {
+                        Console.Write("\nКоробка не помещается на паллете");
+                        return (pallets, boxes);
+                    }
+
+                }
+                else
+                    Console.Write("\nПаллета не найдена");
+            }
+
+            bx.PalletID = NewIdPallet;
+            RefreshPallet(pallets, OldIDPallet);
+            RefreshPallet(pallets, NewIdPallet);
+            return (pallets, boxes);
+        }
     }
+
 }

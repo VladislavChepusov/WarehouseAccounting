@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20230622124452_InitialCreate")]
+    [Migration("20230623160204_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -27,32 +27,35 @@ namespace App.Migrations
 
             modelBuilder.Entity("App.DAL.Entities.Box", b =>
                 {
-                    b.Property<Guid>("ID")
+                    b.Property<Guid>("BoxID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<double>("Depth")
+                    b.Property<double>("BoxDepth")
                         .HasColumnType("double precision");
 
-                    b.Property<DateOnly>("ExpirationDate")
+                    b.Property<DateOnly>("BoxExpirationDate")
                         .HasColumnType("date");
 
-                    b.Property<double>("Height")
+                    b.Property<double>("BoxHeight")
                         .HasColumnType("double precision");
 
-                    b.Property<Guid?>("PalletID")
+                    b.Property<DateOnly>("BoxProductionDate")
+                        .HasColumnType("date");
+
+                    b.Property<double>("BoxVolume")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("BoxWeight")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("BoxWidth")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("PalletID")
                         .HasColumnType("uuid");
 
-                    b.Property<DateOnly>("ProductionDate")
-                        .HasColumnType("date");
-
-                    b.Property<double>("Weight")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Width")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("ID");
+                    b.HasKey("BoxID");
 
                     b.HasIndex("PalletID");
 
@@ -61,26 +64,29 @@ namespace App.Migrations
 
             modelBuilder.Entity("App.DAL.Entities.Pallet", b =>
                 {
-                    b.Property<Guid>("ID")
+                    b.Property<Guid>("PalletID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<double>("Depth")
+                    b.Property<double>("PalletDepth")
                         .HasColumnType("double precision");
 
-                    b.Property<DateOnly>("ExpirationDate")
+                    b.Property<DateOnly>("PalletExpirationDate")
                         .HasColumnType("date");
 
-                    b.Property<double>("Height")
+                    b.Property<double>("PalletHeight")
                         .HasColumnType("double precision");
 
-                    b.Property<double>("Weight")
+                    b.Property<double>("PalletVolume")
                         .HasColumnType("double precision");
 
-                    b.Property<double>("Width")
+                    b.Property<double>("PalletWeight")
                         .HasColumnType("double precision");
 
-                    b.HasKey("ID");
+                    b.Property<double>("PalletWidth")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("PalletID");
 
                     b.ToTable("Pallets");
                 });
@@ -89,7 +95,9 @@ namespace App.Migrations
                 {
                     b.HasOne("App.DAL.Entities.Pallet", null)
                         .WithMany("Boxes")
-                        .HasForeignKey("PalletID");
+                        .HasForeignKey("PalletID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("App.DAL.Entities.Pallet", b =>
