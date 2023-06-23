@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace App.Utils
 {
@@ -76,8 +77,6 @@ namespace App.Utils
             return false;
         }
 
-
-
         public static Pallet CreatePallet()
         {
             Console.Write("Введите ширину паллеты: ");
@@ -118,7 +117,7 @@ namespace App.Utils
                     else
                     {
                         Console.Write("\nКоробка не помещается на паллете");
-                        return (null , pallets);
+                        return (null, pallets);
                     }
 
                 }
@@ -159,13 +158,8 @@ namespace App.Utils
             }
 
             Box box = new Box(IdPallet, width, height, depth, weight, productionDate, expirationDate);
-
             pl.AddBox(box);
-
-            
-                
-
-            return (box ,pallets);
+            return (box, pallets);
 
         }
         private static T FindById<T>(List<T> list, Guid id, String property) where T : class
@@ -178,34 +172,92 @@ namespace App.Utils
         {
             var pl = FindById(pallets, PalletID, "PalletID");
 
+            if (pl.Boxes.Count > 0)
+            {
+                pl.PalletWeight = 30 + pl.Boxes.Where(box => box.PalletID == PalletID).Sum(box => box.BoxWeight);
 
-           
+                pl.PalletExpirationDate = pl.Boxes.Where(box => box.PalletID == PalletID).Min(box => box.BoxExpirationDate);
 
+                pl.PalletVolume = (pl.PalletDepth * pl.PalletWidth * pl.PalletHeight)
+                    + pl.Boxes.Where(box => box.PalletID == PalletID).Sum(box => box.BoxVolume);
+            }
+            else
+            {
+                pl.PalletWeight = 30;
+                pl.PalletExpirationDate = DateOnly.MaxValue;
+                pl.PalletVolume = pl.PalletDepth * pl.PalletWidth * pl.PalletHeight;
 
-            pl.PalletWeight = 30 + pl.Boxes.Sum(box => box.BoxWeight);
-
-            pl.PalletExpirationDate = pl.Boxes.Min(box => box.BoxExpirationDate);
-
-            pl.PalletVolume = (pl.PalletDepth * pl.PalletWidth * pl.PalletHeight ) 
-                + pl.Boxes.Sum(box => box.BoxVolume);
-
-
-
-            Console.WriteLine("ТУУУУУТ");
-            Console.WriteLine($"pl.PalletWeight 30 + {pl.Boxes.Sum(box => box.BoxWeight)} = {30 + pl.Boxes.Sum(box => box.BoxWeight)}");
-            Console.WriteLine($"pl.PalletWeight {pl.PalletWeight}");
-
-
-
-            Console.WriteLine($"pl.PalletVolume {pl.PalletDepth} * {pl.PalletWidth} * {pl.PalletHeight}" +
-                $"+{pl.Boxes.Sum(box => box.BoxVolume)} = {(pl.PalletDepth * pl.PalletWidth * pl.PalletHeight)
-                + pl.Boxes.Sum(box => box.BoxVolume)}");
-
-            Console.WriteLine($"pl.PalletVolume {pl.PalletVolume}");
-
+            }
             return pallets;
         }
 
+
+        public static void OutputBoxes(List<Box> boxes)
+        {
+            Console.WriteLine("Список коробок:");
+            Console.WriteLine("-------------------------------");
+            foreach (var box in boxes)
+            {
+                Console.WriteLine($"ID коробки: {box.BoxID}");
+                Console.WriteLine($"ID паллеты: {box.PalletID}");
+                Console.WriteLine($"Ширина: {box.BoxWidth}");
+                Console.WriteLine($"Высота: {box.BoxHeight}");
+                Console.WriteLine($"Глубина: {box.BoxDepth}");
+                Console.WriteLine($"Вес: {box.BoxWeight}");
+                Console.WriteLine($"Дата производства: {box.BoxProductionDate}");
+                Console.WriteLine($"Дата истечения срока годности: {box.BoxExpirationDate}");
+                Console.WriteLine($"Объем: {box.BoxVolume}");
+                Console.WriteLine("-------------------------------");
+            }
+        }
+
+        public static void PrintPalletList(List<Pallet> pallets)
+        {
+            Console.WriteLine("Список паллет:");
+            Console.WriteLine("-------------------------------");
+
+            // Группируем палеты по дате истечения срока годности
+            var palletByExpirationDate = pallets.GroupBy(p => p.PalletExpirationDate);
+
+            // Сортируем группы по возрастаниюаты истечения срока годности
+            var sortedPalletsByExpirationDate = palletByExpirationDate.OrderBy(g => g.Key);
+
+            foreach (var group in sortedPalletsByExpirationDate)
+            {
+                Console.WriteLine($"Палеты с истекающим сроком годности на дату: {group.Key}");
+                // Сортируем палеты внутри каждой группы по весу
+                var sortedPallets = group.OrderBy(p => p.PalletWeight);
+
+                foreach (var pallet in sortedPallets)
+                {
+                    Console.WriteLine($"ID паллеты: {pallet.PalletID}");
+                    Console.WriteLine($"Ширина: {pallet.PalletWidth}");
+                    Console.WriteLine($"Высота: {pallet.PalletHeight}");
+                    Console.WriteLine($"Глубина: {pallet.PalletDepth}");
+                    Console.WriteLine($"Вес: {pallet.PalletWeight}");
+                    Console.WriteLine($"Объем: {pallet.PalletVolume}");
+                    Console.WriteLine($"Дата истечения срока годности: {pallet.PalletExpirationDate}");
+                    List<Box> myDataList = new List<Box>(pallet.Boxes);
+                    Console.WriteLine("-------------------------------");
+                    OutputBoxes(myDataList);
+
+                }
+            }
+        }
+
+        public static List<Pallet> GetTop3Pallets(List<Pallet> pallets)
+        {
+            //var palletsWithMaxExpirationDate = pallets
+            //    .OrderByDescending(p => p.Boxes.Max(b => b.BoxExpirationDate))
+            //    .Take(3);
+            var palletsWithMaxExpirationDate = pallets
+             .Where(pallet => pallet.Boxes.Any(box => box.BoxExpirationDate != DateOnly.MinValue))
+             .OrderByDescending(p => p.Boxes.Max(b => b.BoxExpirationDate != DateOnly.MinValue ? b.BoxExpirationDate : DateOnly.MaxValue))
+             .Take(3);
+            return palletsWithMaxExpirationDate
+                .OrderBy(p => p.PalletVolume)
+                .ToList();
+        }
 
 
         public static (List<Pallet>, List<Box>) FillPallet(List<Pallet> pallets, List<Box> boxes)
@@ -257,10 +309,11 @@ namespace App.Utils
                 else
                     Console.Write("\nПаллета не найдена");
             }
-
+            OldPallet.RemoveBox(bx);
             bx.PalletID = NewIdPallet;
-            RefreshPallet(pallets, OldIDPallet);
+            pl.AddBox(bx);
             RefreshPallet(pallets, NewIdPallet);
+            RefreshPallet(pallets, OldIDPallet);
             return (pallets, boxes);
         }
     }

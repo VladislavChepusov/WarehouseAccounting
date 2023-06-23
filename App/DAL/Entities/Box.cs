@@ -14,7 +14,6 @@ namespace App.DAL.Entities
         private DateOnly productionDate { get; set; }
 
         private Guid palletID;
-       // public virtual Pallet pallet { get; set; }
 
         public Box() : base(0, 0, 0){   }
 

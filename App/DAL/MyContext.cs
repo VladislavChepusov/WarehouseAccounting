@@ -22,26 +22,6 @@ namespace App.DAL
             optionsBuilder.UseNpgsql(connectionString);
         }
 
-
-
-        //protected override void OnModelCreating(ModelBuilder modelBuilder)
-        //{
-        //    foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        //    {
-        //        foreach (var property in entityType.GetProperties())
-        //        {
-        //            var attribute = property.PropertyInfo.GetCustomAttribute<BackingFieldAttribute>();
-        //            if (attribute != null)
-        //            {
-        //                property.SetColumnName(attribute.Name);
-        //            }
-        //        }
-        //    }
-        //}
-
-
-
-
         public DbSet<Box> Boxes => Set<Box>();
         public DbSet<Pallet> Pallets => Set<Pallet>();
     }

@@ -89,56 +89,15 @@ namespace App.Utils
         }
 
 
-
-
-        //public static async Task SaveDataToDatabase<T>(List<T> dataList) where T : class, IEntity
-        //{
-
-        //    using var dbContext = new MyDbContext();
-
-        //    Console.WriteLine("_______________");
-        //    Console.WriteLine("Началось");
-        //    foreach (var obj in dataList)
-        //    {
-        //        Type type = obj.GetType();
-        //        PropertyInfo[] properties = type.GetProperties();
-
-        //        foreach (var prop in properties)
-        //        {
-        //            Console.WriteLine($"{prop.Name} = {prop.GetValue(obj)}");
-        //        }
-        //    }
-
-        //    Console.WriteLine("_______________");
-
-
-        //    var existingItems = await dbContext.Set<T>().Select(x => x.ID).ToListAsync();
-
-        //    var newItems = dataList.Where(x => !existingItems.Contains(x.ID));
-
-
-        //    await dbContext.Set<T>().AddRangeAsync(newItems);
-
-
-        //    await dbContext.SaveChangesAsync();
-
-        //}
-
         //public static async Task SaveDataToDatabase<T>(List<T> dataList) where T : class, IEntity
         //{
         //    using var dbContext = new MyDbContext();
         //    var existingItems = await dbContext.Set<T>().Select(x => x.).ToListAsync();
-
         //    var newItems = dataList.Where(x => !existingItems.Contains(x.ID)).ToList();
         //    var existingItemsToUpdate = dataList.Where(x => existingItems.Contains(x.ID)).ToList();
-
         //    await dbContext.Set<T>().AddRangeAsync(newItems);
-
         //    dbContext.Set<T>().UpdateRange(existingItemsToUpdate);
-
         //    await dbContext.SaveChangesAsync();
-
-
         //}
     }
 }

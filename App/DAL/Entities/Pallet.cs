@@ -9,14 +9,15 @@ namespace App.DAL.Entities
 {
     public class Pallet : StorageObject
     {
- 
+
         protected virtual ICollection<Box>? boxes { get; set; }
-        public Pallet() : base(0, 0, 0)  { boxes = new List<Box>(); }
+        public Pallet() : base(0, 0, 0) { boxes = new List<Box>(); }
 
         public Pallet(double width, double height, double depth)
             : base(width, height, depth)
         {
             weight = 30;
+            PalletExpirationDate = DateOnly.MaxValue;
             volume = width * height * depth;
             boxes = new List<Box>();
         }
@@ -24,7 +25,7 @@ namespace App.DAL.Entities
         public Guid PalletID
         {
             get { return ID; }
-            private set { ID = value; } 
+            private set { ID = value; }
         }
 
         public double PalletWidth
@@ -73,6 +74,9 @@ namespace App.DAL.Entities
         {
             Boxes.Add(box);
         }
-
+        public void RemoveBox(Box box)
+        {
+            Boxes.Remove(box);
+        }
     }
 }

@@ -33,8 +33,8 @@ internal class Program
                     if (pallets.Count > 0)
                     {
                         //Box bx = DataService.CreateBox(pallets);
-                        Box bx = new Box() ;
-                        (bx,pallets) = DataService.CreateBox(pallets);
+                        Box bx = new Box();
+                        (bx, pallets) = DataService.CreateBox(pallets);
                         if (bx != null)
                         {
                             boxes.Add(bx);
@@ -54,58 +54,23 @@ internal class Program
                     break;
 
                 case "3":
-                    foreach (Box pal in boxes)
-                    {
-                        Console.WriteLine("____________________________");
-                        Type type = typeof(Box); // получаем тип класса Box
-                        PropertyInfo[] properties = type.GetProperties(); // получаем все свойства класса Box
-
-                        foreach (PropertyInfo property in properties)
-                        {
-                            object value = property.GetValue(pal); // получаем значение свойства объекта box
-                            Console.WriteLine(property.Name + ": " + value); // выводим название свойства и его значение
-                        }
-                    }
+                    DataService.OutputBoxes(boxes);
                     break;
 
                 case "4":
-                    foreach (Pallet pal in pallets)
-                    {
-                        Console.WriteLine("____________________________");
-                        Type type = typeof(Pallet); // получаем тип класса Box
-                        PropertyInfo[] properties = type.GetProperties(); // получаем все свойства класса Box
-
-                        foreach (PropertyInfo property in properties)
-                        {
-                            object value = property.GetValue(pal); // получаем значение свойства объекта box
-                            Console.WriteLine(property.Name + ": " + value); // выводим название свойства и его значение
-                        }
-
-                        foreach (Box box in pal.Boxes)
-                        {
-                            Type type1 = typeof(Box); // получаем тип класса Box
-                            PropertyInfo[] properties1 = type1.GetProperties(); // получаем все свойства класса Box
-
-                            foreach (PropertyInfo property1 in properties1)
-                            {
-                                object value1 = property1.GetValue(box); // получаем значение свойства объекта box
-                                Console.WriteLine(property1.Name + ": " + value1); // выводим название свойства и его значение
-                            }
-                        }
-
-
-                    }
+                    DataService.PrintPalletList(pallets);
                     break;
 
                 case "5":
                     if (pallets.Count > 1 && boxes.Count > 0)
                         (pallets, boxes) = DataService.FillPallet(pallets, boxes);
-                    //DataService.FillPallet(pallets, boxes);
+
                     else
                         Console.WriteLine("\nНедостаточно коробок или паллет");
                     break;
 
                 case "6":
+                    DataService.PrintPalletList(DataService.GetTop3Pallets(pallets));
                     break;
 
                 case "7":
@@ -116,7 +81,6 @@ internal class Program
                     break;
 
                 case "q":
-                    // Выход из цикла while
                     isRunning = false;
                     break;
 
